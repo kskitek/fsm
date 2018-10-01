@@ -2,39 +2,15 @@ package fsm
 
 type State int
 
-type Transition = func() (State, error)
-type StateHandler struct {
-	State          State
-	TransitionFunc Transition
-}
+type Emitter = func() (State, error)
 
 type ErrorHandler = func(error) *State
 
-func SimpleTransition(from State, to State) *StateHandler {
-	f := func() (State, error) { return to, nil }
-	return &StateHandler{State: from, TransitionFunc: f}
-}
-
-// TODO constructor from map
-func New(handlers []StateHandler) Fsm {
-	hmap := make(map[State]Transition, len(handlers))
-	for _, v := range handlers {
-		hmap[v.State] = v.TransitionFunc
-	}
-	return NewFromMap(hmap)
-}
-
-func NewFromMap(handlers map[State]Transition) Fsm {
-	return &fsm{
-		handlers: handlers,
-	}
-}
-
 // TODO add options with fluent API like WithErrorHandler.WithTransitionDecorator
-// TODO New with decorators
+// TODO New with stateDecorators
 // TODO add errorHandler and default errorHandler
 // TODO options like State and transition timeout, whole FSM timeout or state repeat count limit
-// some of those can be implemented as transition decorators
+// some of those can be implemented as transition stateDecorators
 
 type Fsm interface {
 	Start(State)
@@ -43,7 +19,7 @@ type Fsm interface {
 
 type fsm struct {
 	state    State
-	handlers map[State]Transition
+	handlers map[State]Emitter
 }
 
 func (f *fsm) Start(initial State) {

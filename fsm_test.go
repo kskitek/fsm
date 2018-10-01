@@ -23,7 +23,7 @@ func (v *verifyableHandler) ToState2() (State, error) {
 }
 
 func Test_InitialStateIsSet(t *testing.T) {
-	out := New([]StateHandler{})
+	out := New(make(map[State]Emitter)).Build()
 
 	out.Start(Test1)
 	actual := out.GetCurrent()
@@ -31,7 +31,7 @@ func Test_InitialStateIsSet(t *testing.T) {
 }
 
 func Test_NoHandlers_InitialStateIsReached(t *testing.T) {
-	out := New([]StateHandler{})
+	out := New(make(map[State]Emitter)).Build()
 
 	out.Start(Test1)
 	actual := out.GetCurrent()
@@ -40,8 +40,20 @@ func Test_NoHandlers_InitialStateIsReached(t *testing.T) {
 
 func Test_TransitionFunctionIsCalled(t *testing.T) {
 	v := &verifyableHandler{error: nil, state: Test2}
-	sh := StateHandler{State: Test1, TransitionFunc: v.ToState2}
-	out := New([]StateHandler{sh})
+	m := map[State]Emitter{Test1: v.ToState2}
+	out := New(m).Build()
+
+	out.Start(Test1)
+	actual := out.GetCurrent()
+
+	assert.Equal(t, Test2, actual)
+	assert.True(t, v.wasCalled)
+}
+
+func Test_Error(t *testing.T) {
+	v := &verifyableHandler{error: nil, state: Test2}
+	m := map[State]Emitter{Test1: v.ToState2}
+	out := New(m).Build()
 
 	out.Start(Test1)
 	actual := out.GetCurrent()
