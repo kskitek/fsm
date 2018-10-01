@@ -4,13 +4,7 @@ type State int
 
 type Emitter = func() (State, error)
 
-type ErrorHandler = func(error) *State
-
-// TODO add options with fluent API like WithErrorHandler.WithTransitionDecorator
-// TODO New with stateDecorators
-// TODO add errorHandler and default errorHandler
-// TODO options like State and transition timeout, whole FSM timeout or state repeat count limit
-// some of those can be implemented as transition stateDecorators
+type ErrorHandler = func(curr State, err error) (State, error)
 
 type Fsm interface {
 	Start(State)
@@ -18,8 +12,9 @@ type Fsm interface {
 }
 
 type fsm struct {
-	state    State
-	handlers map[State]Emitter
+	state      State
+	handlers   map[State]Emitter
+	errHandler ErrorHandler
 }
 
 func (f *fsm) Start(initial State) {
@@ -32,8 +27,11 @@ func (f *fsm) Start(initial State) {
 		}
 		next, err := transition()
 		if err != nil {
-			// TODO error handler
-			return
+			newNext, err := f.errHandler(f.state, err)
+			if err != nil {
+				return
+			}
+			next = newNext
 		}
 		f.state = next
 	}

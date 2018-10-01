@@ -20,7 +20,8 @@ type FsmBuilder struct {
 
 func (f *FsmBuilder) Build() Fsm {
 	return &fsm{
-		handlers: f.handlers,
+		handlers:   f.handlers,
+		errHandler: f.errorHandler,
 	}
 }
 
@@ -44,7 +45,7 @@ func (f *FsmBuilder) WithDecorator(d Emitter) *FsmBuilder {
 	return f
 }
 
-func defaultErrorHandler(err error) *State {
-	log.Errorf("Error during emission of state: %s", err.Error())
-	return nil
+func defaultErrorHandler(curr State, err error) (State, error) {
+	log.Errorf("Error during transition from state {%s} of state: %s", string(curr), err.Error())
+	return curr, nil
 }
