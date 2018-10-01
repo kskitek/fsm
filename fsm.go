@@ -2,7 +2,7 @@ package fsm
 
 type State int
 
-type Emitter = func() (State, error)
+type Emitter = func(State) (State, error)
 
 type ErrorHandler = func(curr State, err error) (State, error)
 
@@ -25,7 +25,7 @@ func (f *fsm) Start(initial State) {
 		if !ok {
 			return
 		}
-		next, err := transition()
+		next, err := transition(f.state)
 		if err != nil {
 			newNext, err := f.errHandler(f.state, err)
 			if err != nil {
