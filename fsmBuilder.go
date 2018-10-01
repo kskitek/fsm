@@ -1,6 +1,9 @@
 package fsm
 
-import "github.com/prometheus/common/log"
+import (
+	"github.com/opentracing/opentracing-go/log"
+	"github.com/pkg/errors"
+)
 
 type EmitterDecorator func(Emitter) Emitter
 
@@ -21,6 +24,7 @@ type FsmBuilder struct {
 }
 
 func (f *FsmBuilder) Build() Fsm {
+	f.buildStateDecorators()
 	f.buildDecorators()
 	return &fsm{
 		handlers:   f.handlers,
@@ -28,10 +32,19 @@ func (f *FsmBuilder) Build() Fsm {
 	}
 }
 
+func (f *FsmBuilder) buildStateDecorators() {
+	for state, decorators := range f.stateDecorators {
+		for _, d := range decorators {
+			fun := f.handlers[state]
+			f.handlers[state] = d(fun)
+		}
+	}
+}
+
 func (f *FsmBuilder) buildDecorators() {
-	for k, v := range f.handlers {
+	for state, fun := range f.handlers {
 		for _, d := range f.decorators {
-			f.handlers[k] = d(v)
+			f.handlers[state] = d(fun)
 		}
 	}
 }
@@ -57,6 +70,7 @@ func (f *FsmBuilder) WithDecorator(d EmitterDecorator) *FsmBuilder {
 }
 
 func defaultErrorHandler(curr State, err error) (State, error) {
-	log.Errorf("Error during transition from state {%s} of state: %s", string(curr), err.Error())
-	return curr, nil
+	resErr := errors.Errorf("Error during transition from state {%s} of state: %s", string(curr), err.Error())
+	log.Error(resErr)
+	return willNotOccurState, resErr
 }

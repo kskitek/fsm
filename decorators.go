@@ -14,10 +14,6 @@ func Logging(e Emitter) Emitter {
 	}
 }
 
-func Timeout(e Emitter) Emitter {
-	return e // TODO impl me
-}
-
 type RepeatingErrorHandler struct {
 	count     int
 	MaxCount  int

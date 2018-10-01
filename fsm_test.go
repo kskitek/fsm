@@ -75,6 +75,17 @@ func Test_Error_IsHandledByErrorHandler(t *testing.T) {
 	assert.Equal(t, 1, errH.calledTimes)
 }
 
+func Test_NoErrorHandler_Error_DefaultErrorHandlerIsProvided(t *testing.T) {
+	v := &verifyableHandler{error: fmt.Errorf("test error")}
+	m := map[State]Emitter{Test1: v.ToState}
+	out := New(m).Build()
+
+	out.Start(Test1)
+	actual := out.GetCurrent()
+
+	assert.Equal(t, Test1, actual)
+}
+
 func Test_Error_ErrorHandlerChangesState(t *testing.T) {
 	v := &verifyableHandler{error: fmt.Errorf("test error"), state: Test2}
 	m := map[State]Emitter{Test1: v.ToState}
@@ -85,9 +96,10 @@ func Test_Error_ErrorHandlerChangesState(t *testing.T) {
 	actual := out.GetCurrent()
 
 	assert.Equal(t, Test3, actual)
+	assert.Equal(t, 1, errH.calledTimes)
 }
 
-func Test_Decorator_IsCalled_ForEachState(t *testing.T) {
+func Test_Decorator_IsCalledForEachState(t *testing.T) {
 	to2 := &verifyableHandler{state: Test2}
 	to3 := &verifyableHandler{state: Test3}
 	m := map[State]Emitter{
@@ -103,5 +115,28 @@ func Test_Decorator_IsCalled_ForEachState(t *testing.T) {
 
 	assert.Equal(t, Test3, actual)
 	assert.Equal(t, 2, decorator.calledTimes)
+}
+
+func Test_StateDecorator_IsCalledOnlyForState(t *testing.T) {
+	to2 := &verifyableHandler{state: Test2}
+	to3 := &verifyableHandler{state: Test3}
+	m := map[State]Emitter{
+		Test1: to2.ToState,
+		Test2: to3.ToState,
+	}
+	decorator1 := &verifyableHandler{state: Test3}
+	decorator2 := &verifyableHandler{state: Test3}
+
+	out := New(m).
+		WithStateDecorator(Test2, decorator1.Decorator).
+		WithStateDecorator(Test2, decorator2.Decorator).
+		Build()
+
+	out.Start(Test1)
+	actual := out.GetCurrent()
+
+	assert.Equal(t, Test3, actual)
+	assert.Equal(t, 1, decorator1.calledTimes)
+	assert.Equal(t, 1, decorator2.calledTimes)
 
 }

@@ -1,5 +1,11 @@
 package fsm
 
+import "math"
+
+const (
+	willNotOccurState State = math.MinInt32
+)
+
 type State int
 
 type Emitter = func(State) (State, error)
