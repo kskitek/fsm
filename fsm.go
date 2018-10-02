@@ -10,6 +10,7 @@ const (
 type State int
 
 // Emitter emits next state from current state.
+// When it returns error, fsm will either recover with error handler or stop.
 type Emitter = func(State) (State, error)
 
 // ErrorHandler func is used by Fsm to handle Emitter's errors.

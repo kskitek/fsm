@@ -2,28 +2,28 @@
 
 # fsm - Finite State Machine
 
-`fsm` is very simple finite state machine implementation. This library is build with technical FSMs in mind. TODO
+`fsm` is very simple finite state machine implementation. The FSM is defined by States and next State Emitters.
 
 ## Usage
 
 ```go
-    package main
+package main
 
-    import "github.com/kskitek/fsm"
+import "github.com/kskitek/fsm"
 
-    const (
-    	State1 fsm.State = iota
-    	State2
-    )
+const (
+    State1 fsm.State = iota
+    State2
+)
+
+func main() {
+    m := map[fsm.State]fsm.Emitter{State1: ToState2}
     
-    func main() {
-        m := map[fsm.State]fsm.Emitter{State1: ToState2}
-        
-        out := fsm.New(m).Build()
+    out := fsm.New(m).Build()
 
-        // start with initial state
-        out.Start(State1)
-    }
+    // start with initial state
+    out.Start(State1)
+}
     
 func ToState2(s fsm.State) (fsm.State, error) {
     return State2, nil
@@ -33,7 +33,7 @@ func ToState2(s fsm.State) (fsm.State, error) {
 ## Decorators
 
 `fsm` provides `fsm.EmitterDecorator` type that allows to wrap around Emitters, change state, log transitions,
-send or store events, etc.
+send or store events, etc. You can apply decorator to either specified State or to all States using FsmBuilder.
 
 **Example usage:**
 

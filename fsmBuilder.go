@@ -5,8 +5,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+// EmitterDecorator is used by FsmBuilder to decorate both, individual step Emitter and global decorator.
 type EmitterDecorator func(Emitter) Emitter
 
+// New creates new FsmBuilder.
 func New(handlers map[State]Emitter) *FsmBuilder {
 	return &FsmBuilder{
 		handlers:        handlers,
@@ -23,6 +25,7 @@ type FsmBuilder struct {
 	decorators      []EmitterDecorator
 }
 
+// Build prepares ready to start Fsm.
 func (f *FsmBuilder) Build() Fsm {
 	f.buildStateDecorators()
 	f.buildDecorators()
@@ -49,11 +52,16 @@ func (f *FsmBuilder) buildDecorators() {
 	}
 }
 
+// WithErrorHandler allows to handle errors in state Emitters. When none specified, defaultErrorHandler will be used.
 func (f *FsmBuilder) WithErrorHandler(errorHandler ErrorHandler) *FsmBuilder {
 	f.errorHandler = errorHandler
 	return f
 }
 
+// WithStateDecorator adds EmitterDecorator only to given state.
+// State Decorators will be applied in order in which they were declared.
+//
+// State Decorators are applied before global decorators.
 func (f *FsmBuilder) WithStateDecorator(s State, d EmitterDecorator) *FsmBuilder {
 	e := f.stateDecorators[s]
 	if e != nil {
@@ -64,6 +72,10 @@ func (f *FsmBuilder) WithStateDecorator(s State, d EmitterDecorator) *FsmBuilder
 	return f
 }
 
+// WithDecorator adds EmitterDecorator global decorator to all states.
+// Decorators will be applied in order in which they were declared.
+//
+// Decorators are applied after state decorators.
 func (f *FsmBuilder) WithDecorator(d EmitterDecorator) *FsmBuilder {
 	f.decorators = append(f.decorators, d)
 	return f
