@@ -1,8 +1,8 @@
 package fsm
 
 import (
-	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
+	"log"
 )
 
 // EmitterDecorator is used by FsmBuilder to decorate both, individual step Emitter and global decorator.
@@ -83,6 +83,6 @@ func (f *FsmBuilder) WithDecorator(d EmitterDecorator) *FsmBuilder {
 
 func defaultErrorHandler(curr State, err error) (State, error) {
 	resErr := errors.Errorf("Error during transition from state {%s} of state: %s", string(curr), err.Error())
-	log.Error(resErr)
+	log.Println(resErr)
 	return willNotOccurState, resErr
 }
